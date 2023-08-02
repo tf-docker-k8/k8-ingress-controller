@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app2
+  labels:
+    name: app2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: app2
+  template:
+    metadata:
+      labels:
+        name: app2
+    spec:
+      containers:
+      - name: app2
+        image: techworldwithsiva/app2
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app2
+  labels:
+    name: app2
+spec:
+  selector:
+  # you should provide pod labels here
+    name: app2
+  ports:
+  - name: http-port
+    protocol: TCP
+    # service port
+    port: 80
+    # pod port
+    targetPort: 80
+---
+# Here Ingress is the resource that is capable of creating AWS ALB resource, you must provide annotations
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app2
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/tags: Environment=DEV
+spec:
+  ingressClassName: alb
+  rules:
+  - host: "app2.cloudcamp.online"
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: app2
+            port:
+              number: 80
